@@ -60,13 +60,15 @@ export const approveApplication = async (req, res, next) => {
     const { user } = req;
     const { applicationId } = req.params;
 
-    const application = await Application.findById(applicationId).populate("appliedFor");
+    const application = await Application.findById(applicationId).populate("appliedFor").populate("applicant");
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
 
     // Only owner or admin of the society can approve
     const society = application.appliedFor;
+    const applicant = application.applicant;
+
     if (society.owner.toString() !== user._id.toString() && !society.admins.includes(user._id)) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -75,10 +77,14 @@ export const approveApplication = async (req, res, next) => {
     application.reviewedBy = user._id;
     application.reviewedAt = new Date();
     const updatedApp = await application.save();
+    
 
+    applicant.societyId = society._id
+    await applicant.save()
     // Add applicant to society members
     if (!society.members.includes(application.applicant)) {
       society.members.push(application.applicant);
+      society.memberCount+=1
       await society.save();
     }
 
@@ -172,8 +178,6 @@ export const getApplications = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 export const checkMyApplications = async (req,res,next) => {
     try {

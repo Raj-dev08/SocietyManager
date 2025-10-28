@@ -15,6 +15,7 @@ import complaintRoutes from './routes/complaint.routes.js'
 import eventRoutes from './routes/event.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import noticeRoutes from './routes/notice.routes.js'
+import visitRoutes from './routes/visit.routes.js'
 
 const app = express(); 
 
@@ -39,7 +40,7 @@ app.use("/api/v0/complaints",protectRoute, complaintRoutes)
 app.use("/api/v0/events",protectRoute, eventRoutes)
 app.use("/api/v0/notifications", notificationRoutes)
 app.use("/api/v0/notice",protectRoute, noticeRoutes)
-
+app.use("/api/v0/visit",protectRoute, visitRoutes)
 
 app.use(errorHandler)
 

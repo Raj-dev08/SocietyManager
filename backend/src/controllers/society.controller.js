@@ -1,4 +1,9 @@
 import Societies from "../models/society.model.js";
+import User from "../models/user.model.js";
+import Application from "../models/application.model.js";
+import Complaints from "../models/complaints.model.js";
+import Notices from "../models/notice.model.js";
+import Events from "../models/events.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
 
@@ -23,13 +28,13 @@ export const createSociety = async (req,res,next) => {
         let uploadedImages = [];
 
         if (imageArray && imageArray.length > 0) {
-        const uploads = await Promise.allSettled(
-            imageArray.map(img => cloudinary.uploader.upload(img))
-        );//making sure not the whole thing crashes for 1 image fail
+          const uploads = await Promise.allSettled(
+              imageArray.map(img => cloudinary.uploader.upload(img))
+          );//making sure not the whole thing crashes for 1 image fail
 
-        uploadedImages = uploads
-            .filter(r => r.status === "fulfilled")
-            .map(r => r.value.secure_url);
+          uploadedImages = uploads
+              .filter(r => r.status === "fulfilled")
+              .map(r => r.value.secure_url);
         }
 
         const newSociety = new Societies({
@@ -117,6 +122,22 @@ export const deleteSociety = async (req,res,next) => {
         }
 
         await Societies.findByIdAndDelete(societyId)
+
+        await User.updateMany(
+          { societyId },
+          { $unset: { societyId: "" } } // removes the field
+        );
+
+        await Application.deleteMany({
+          appliedFor:societyId
+        })
+
+        await Complaints.deleteMany({societyId})
+
+        await Events.deleteMany({societyId})
+
+        await Notices.deleteMany({appliedFor:societyId})
+
         await redis.del(`Society:${societyId}`)
 
         return res.status(200).json({ message: "Society deleted successfully"})

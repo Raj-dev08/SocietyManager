@@ -9,7 +9,7 @@ const qstash = new Client({
   token: process.env.QSTASH_TOKEN
 })
 
-const URL = `${process.env.APP_URl}`
+const URL = `${process.env.APP_URl}/api/v0/notifications/notify-event`
 
 const deleteSocietyCache = async (societyId) => {
   const pattern1 = `Society:${societyId}`;

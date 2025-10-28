@@ -25,7 +25,7 @@ const societySchema = new mongoose.Schema(
             type:Number,
             required:true
         },
-        locationName:{
+        locationName:{//can use as cityname through frontend
             type:String,
             required:true
         },
@@ -66,6 +66,12 @@ const societySchema = new mongoose.Schema(
             {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Bills"
+            }
+        ],
+        scheduledVisit:[
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Visit"
             }
         ],
         memberCount:{

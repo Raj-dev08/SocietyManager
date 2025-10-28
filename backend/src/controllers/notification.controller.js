@@ -50,12 +50,12 @@ export const notifyEvent = async (req, res , next) => {
 
         
         const sendPromises = society.members.map(async (member) => {
-        if (member.fcmToken) {
-            await sendNotificationToFCM(member.fcmToken, {
-                title: "Event Reminder",
-                body: message,
-            });
-        }
+            if (member.fcmToken) {
+                await sendNotificationToFCM(member.fcmToken, {
+                    title: "Event Reminder",
+                    body: message,
+                });
+            }
         });
 
         await Promise.all(sendPromises);

@@ -1,6 +1,7 @@
 import Notices from "../models/notice.model.js";
 import Societies from "../models/society.model.js";
 import { redis } from "../lib/redis.js";
+import { noticeQueue } from "../lib/noticeNotification.queue.js";
 
 // Helper to delete society-related cache
 const deleteSocietyCache = async (societyId) => {
@@ -8,7 +9,7 @@ const deleteSocietyCache = async (societyId) => {
   await redis.del(`Notices:${societyId}`);
 };
 
-const isValidDate = (dateStr) => {
+export const isValidDate = (dateStr) => {
   const date = new Date(dateStr);
   return !isNaN(date.getTime());
 }
@@ -16,7 +17,7 @@ const isValidDate = (dateStr) => {
 
 // Helper to check if user is a society member
 const checkIfMember = async (societyId, user) => {
-  let society;
+    let society;
     const cacheKeyForSociety = `Society:${societyId}`
     const cachedSociety = await redis.get(cacheKeyForSociety)
 
@@ -47,7 +48,8 @@ export const createNotice = async (req, res, next) => {
   try {
     const { user } = req;
     const { societyId } = req.params;
-    const { header, description, type, inconvenience, fromDate, toDate, reason } = req.body;
+    const { header, description, type, inconvenience, reason } = req.body;
+    let { fromDate, toDate } = req.body
     fromDate = isValidDate(fromDate) ? new Date(fromDate) : undefined
     toDate = isValidDate(toDate) ? new Date(toDate) : undefined
 
@@ -94,8 +96,31 @@ export const createNotice = async (req, res, next) => {
 
     society.notices.push(savedNotice._id);
     await society.save();
+    
 
     await deleteSocietyCache(societyId);
+    //can queue the whole saving but u need a message broker for confirmation
+    //for now i am sticking to normal save and only queue for notifications
+
+    let message;
+    if (inconvenience && reason) {
+      message = `Notice: ${header}\n\nInconvenience: ${inconvenience}\nReason: ${reason}\n\nPlease plan accordingly.`;
+    } else {
+      message = description;
+    }
+
+    if (fromDate && toDate) {
+      const fromStr = fromDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+      const toStr = toDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+      message += `\nDuration: ${fromStr} - ${toStr}`;
+    }
+
+
+    await noticeQueue.add("sendNoticeNotification",{
+      societyId,
+      title:header,
+      body:message
+    })
 
     return res.status(201).json({ message: "Notice created successfully", notice: savedNotice });
   } catch (error) {
@@ -108,7 +133,8 @@ export const editNotice = async (req, res, next) => {
   try {
     const { user } = req;
     const { noticeId } = req.params;
-    const { header, description, type, inconvenience, fromDate, toDate, reason } = req.body;
+    const { header, description, type, inconvenience, reason } = req.body;
+    let { fromDate, toDate } = req.body
     fromDate = isValidDate(fromDate) ? new Date(fromDate) : undefined
     toDate = isValidDate(toDate) ? new Date(toDate) : undefined
 
@@ -141,6 +167,13 @@ export const editNotice = async (req, res, next) => {
 
     
     const updatedNotice = await notice.save();
+
+
+    await noticeQueue.add("sendNoticeNotification",{
+      societyId: notice.societyId,
+      title: "Previous notice edited 📝",
+      body: "1 Notice is Edited please check all the society notices for more info "
+    })
 
     await deleteSocietyCache(society._id);
     await redis.set(`Notice:${noticeId}`,JSON.stringify(updatedNotice), "EX" , 60 * 60 * 24 )

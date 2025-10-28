@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
         type: String,
         default:""
     },
+    societyId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Societies"
+    },
     fcmToken:{
         type: String,
         required: true
