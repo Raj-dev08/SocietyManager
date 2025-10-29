@@ -23,9 +23,9 @@ export const createComplaint = async (req,res,next) => {
             return res.status(404).json({ message: "Society not found "})
         }
 
-        if ( !society.members.includes(user._id) 
-            && !society.admins.includes(user._id) 
-            && society.owner.toString() !== user._id.toString()
+        if ( !society.members.map(id => id.toString()).includes(user._id.toString()) && 
+            !society.admins.map(id => id.toString()).includes(user._id.toString()) &&
+            society.owner.toString() !== user._id.toString()
         )
         {
             return res.status(401).json({ message: "You are not authorised with this society"})
@@ -211,9 +211,9 @@ export const deleteComplaint = async (req, res, next) => {
             return res.status(400).json({ message: "Society not found" })
         }
 
-        if ( complaint.raisedBy.toString() !== user._id.toString() 
-            && !society.admins.includes(user._id)
-            && society.owner.toString() !== user._id.toString() 
+        if ( complaint.raisedBy.toString() !== user._id.toString() &&
+            !society.admins.map(id => id.toString()).includes(user._id.toString()) &&
+            society.owner.toString() !== user._id.toString() 
         ) {
             return res.status(403).json({ message: "Not authorized to delete this complaint" });
         }
@@ -267,9 +267,9 @@ export const vote = async (req,res,next) => {
             return res.status(400).json({ message: "Society not found" })
         }
 
-        if ( !society.members.includes(user._id) 
-            && !society.admins.includes(user._id) 
-            && society.owner.toString() !== user._id.toString()
+        if ( !society.members.map(id => id.toString()).includes(user._id.toString()) && 
+            !society.admins.map(id => id.toString()).includes(user._id.toString()) &&
+            society.owner.toString() !== user._id.toString()
         )
         {
             return res.status(401).json({ message: "You are not authorised with this society"})

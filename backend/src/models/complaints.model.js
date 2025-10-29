@@ -42,6 +42,9 @@ const complaintSchema = new mongoose.Schema(
                 ref: "User"
             }
         ],
+    },
+    {
+        timestamps: true
     }
 )
 

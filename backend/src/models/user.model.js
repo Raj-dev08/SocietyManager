@@ -27,7 +27,15 @@ const userSchema = new mongoose.Schema(
         type:String,
         required: true,
         default: "User",
-        enum: ["Vendor", "SocietyAdmin","User","Staff","Owner"]
+        enum: ["Vendor", "Admin","User","Staff","Owner"]//can change the User to a userPreference model so u can actually have personalised ads
+    },
+    isSysAdmin:{
+        type: Boolean,
+        default: false
+    },
+    userType:{
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'role'
     },
     password: {
         type: String,

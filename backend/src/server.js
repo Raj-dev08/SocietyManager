@@ -16,6 +16,8 @@ import eventRoutes from './routes/event.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import noticeRoutes from './routes/notice.routes.js'
 import visitRoutes from './routes/visit.routes.js'
+import sysAdminRoutes from './routes/sysadmin.routes.js'
+import ownerRoutes from './routes/owner.routes.js'
 
 const app = express(); 
 
@@ -41,6 +43,8 @@ app.use("/api/v0/events",protectRoute, eventRoutes)
 app.use("/api/v0/notifications", notificationRoutes)
 app.use("/api/v0/notice",protectRoute, noticeRoutes)
 app.use("/api/v0/visit",protectRoute, visitRoutes)
+app.use("/api/v0/sysAdmin",protectRoute, sysAdminRoutes)
+app.use("/api/v0/ownerAccess",protectRoute, ownerRoutes)
 
 app.use(errorHandler)
 
