@@ -13,10 +13,10 @@ const deleteApplicationCache = async (societyId) => {
 export const applyForSociety = async (req, res, next) => {
   try {
     const { user } = req;
-    const { societyId } = req.body;
+    const { societyId , houseNo} = req.body;
 
-    if (!societyId) {
-      return res.status(400).json({ message: "Society ID is required" });
+    if (!societyId || !houseNo) {
+      return res.status(400).json({ message: "Society ID and houseNo  is required" });
     }
 
     const society = await Societies.findById(societyId);
@@ -31,7 +31,8 @@ export const applyForSociety = async (req, res, next) => {
     // Prevent duplicate applications
     const existingApplication = await Application.findOne({
       applicant: user._id,
-      appliedFor: societyId
+      appliedFor: societyId,
+      houseNo
     });
 
     if (existingApplication) {
@@ -40,7 +41,8 @@ export const applyForSociety = async (req, res, next) => {
 
     const application = new Application({
       applicant: user._id,
-      appliedFor: societyId
+      appliedFor: societyId,
+      houseNo
     });
 
     const savedApp = await application.save();
@@ -77,14 +79,33 @@ export const approveApplication = async (req, res, next) => {
     application.reviewedBy = user._id;
     application.reviewedAt = new Date();
     const updatedApp = await application.save();
-    
 
     applicant.societyId = society._id
+
     await applicant.save()
     // Add applicant to society members
     if (!society.members.includes(application.applicant)) {
       society.members.push(application.applicant);
       society.memberCount+=1
+
+      const { houseNo } = application;
+
+      // Find if the house already exists
+      let flat = society.flats.find(f => f.houseNo === houseNo);
+
+      if (!flat) {
+        // Create new flat if not exists
+        society.flats.push({
+          houseNo,
+          houseMembers: [application.applicant]
+        });
+      } else {
+        // Add member if not already present
+        if (!flat.houseMembers.includes(application.applicant)) {
+          flat.houseMembers.push(application.applicant);
+        }
+      }
+
       await society.save();
     }
 

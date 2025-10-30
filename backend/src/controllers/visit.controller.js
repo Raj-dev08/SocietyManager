@@ -103,9 +103,10 @@ export const acceptVisit = async (req,res,next) => {
     try {
         const { user } = req
         const { visitId } = req.params
+        const { houseNo } =req.body
 
-        if(!visitId){
-            return res.status(400).json({ message: "visitId is needed"})
+        if(!visitId || !houseNo ){
+            return res.status(400).json({ message: "visitId and houseNo is needed"})
         }
 
         const visit = await Visit.findById(visitId).populate("visitor","fcmToken").populate("societyId")
@@ -115,10 +116,15 @@ export const acceptVisit = async (req,res,next) => {
         }
 
         const society = visit.societyId
+        const flat = society.flats.find( f => f.houseNo === houseNo )
+        if(!flat){
+            return res.status(404).json({ message: "flat with HouseNo  doesnt exist"})
+        }
 
         
 
         visit.status = "accepted"
+        visit.houseNo = houseNo
         society.scheduledVisit.push(visitId)
         await society.save()
         await visit.save()

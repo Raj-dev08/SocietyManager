@@ -60,16 +60,28 @@ const societySchema = new mongoose.Schema(
                 ref: "Notices"
             }
         ],
+        flat:{
+            houseNo:{
+                type: String,
+                required: true
+            },
+            houseMembers:[
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User"
+                }
+            ],
+            bills: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Bills"
+                }
+            ],
+        },
         admins:[// all the society admins
             {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "User"
-            }
-        ],
-        bills: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Bills"
             }
         ],
         scheduledVisit:[

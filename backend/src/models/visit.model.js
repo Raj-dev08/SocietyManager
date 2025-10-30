@@ -18,6 +18,9 @@ const visitSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
+        houseNo:{
+            type: String
+        },
         status:{
             type: String,
             required: true,

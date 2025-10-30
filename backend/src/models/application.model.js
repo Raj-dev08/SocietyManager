@@ -12,6 +12,10 @@ const applicantSchema = new mongoose.Schema(
       ref: "Societies",
       required: true
     },
+    houseNo: {
+      type: String,
+      required: true
+    },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
