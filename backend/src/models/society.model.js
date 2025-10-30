@@ -25,6 +25,10 @@ const societySchema = new mongoose.Schema(
             type:Number,
             required:true
         },
+        location: {
+            type: { type: String, default: "Point" },
+            coordinates: { type: [Number], default: [0, 0] } // [lng, lat]
+        },
         locationName:{//can use as cityname through frontend
             type:String,
             required:true
@@ -74,6 +78,12 @@ const societySchema = new mongoose.Schema(
                 ref: "Visit"
             }
         ],
+        staff:[
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
         memberCount:{
             type: Number,
             default: 0
@@ -100,6 +110,12 @@ societySchema.pre("save", function(next) {
 });
 
 
+societySchema.pre("save", function(next) {
+    this.location = { type: "Point", coordinates: [this.lng, this.lat] };
+    next();
+});
+
+
 
 //index for searching
 societySchema.index({
@@ -120,6 +136,9 @@ societySchema.index({eventCount:1});
 
 societySchema.index({adminCount:-1});
 societySchema.index({adminCount:1});
+
+
+societySchema.index({ location: "2dsphere" });
 
 
 const Societies = mongoose.model("Societies", societySchema)

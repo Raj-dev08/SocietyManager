@@ -24,12 +24,23 @@ const taskSchema = new mongoose.Schema(
         },
         deadLine: {
             type: Date,
+            required: true
+        },
+        isDone:{
+            type: Boolean,
+            default: false
+        },
+        verifiedByOwner:{
+            type: Boolean,
+            default: false
         }
     },
     {
         timestamps: true
     }
 );
+
+taskSchema.index({ deadLine: -1 })
 
 const Tasks = mongoose.model("Task", taskSchema)
 

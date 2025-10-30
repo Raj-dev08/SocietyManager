@@ -19,6 +19,10 @@ const adminSchema = new mongoose.Schema(
         isActive:{
             type: Boolean,
             default: true
+        },
+        adminCredits:{
+            type: Number,
+            default: 0
         }
     },
     {
