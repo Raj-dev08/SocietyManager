@@ -36,6 +36,17 @@ const societySchema = new mongoose.Schema(
         landMark:{
             type:String
         },
+        razorpayAccount: {
+            accountId: { type: String },
+            status:{ type: String },
+            email: { type: String },
+            phone: { type: String },
+            fundAccountId: { type: String },       
+            createdAt: {
+                type: Date,
+                default: Date.now()
+            }
+        },
         members:[//society members
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -60,24 +71,26 @@ const societySchema = new mongoose.Schema(
                 ref: "Notices"
             }
         ],
-        flat:{
-            houseNo:{
-                type: String,
-                required: true
-            },
-            houseMembers:[
-                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "User"
-                }
-            ],
-            bills: [
-                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Bills"
-                }
-            ],
-        },
+        flats:[
+            {
+                houseNo:{
+                    type: String,
+                    required: true
+                },
+                houseMembers:[
+                    {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "User"
+                    }
+                ],
+                bills: [
+                    {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "Bills"
+                    }
+                ],
+            }
+        ],
         admins:[// all the society admins
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -148,6 +161,9 @@ societySchema.index({eventCount:1});
 
 societySchema.index({adminCount:-1});
 societySchema.index({adminCount:1});
+
+societySchema.index({ "razorpayAccount.accountId": 1 });
+
 
 
 societySchema.index({ location: "2dsphere" });

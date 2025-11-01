@@ -4,7 +4,6 @@ import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
 import { Client } from '@upstash/qstash'
 
-
 const qstash = new Client({
   token: process.env.QSTASH_TOKEN
 })
@@ -12,10 +11,8 @@ const qstash = new Client({
 const URL = `${process.env.APP_URl}/api/v0/notifications/notify-event`
 
 const deleteSocietyCache = async (societyId) => {
-  const pattern1 = `Society:${societyId}`;
-  const pattern2 = `AllEvents:${societyId}`
-  await redis.del(pattern1)
-  await redis.del(pattern2)
+  await redis.del(`Society:${societyId}`);
+  await redis.del(`AllEvents:${societyId}`);
 };
 
 const checkIfSocietyMembers = async (societyId,user) => {
@@ -34,11 +31,11 @@ const checkIfSocietyMembers = async (societyId,user) => {
         return false
     }
 
-    if (  !society.members.map(id => id.toString()).includes(user._id.toString()) && 
-            !society.admins.map(id => id.toString()).includes(user._id.toString()) &&
-            society.owner.toString() !== user._id.toString()
-    )
-    {
+    if (
+        !society.members.some(id => id.toString() === user._id.toString()) &&
+        !society.admins.some(id => id.toString() === user._id.toString()) &&
+        society.owner.toString() !== user._id.toString()
+    ) {
         return false
     }
 
@@ -61,14 +58,14 @@ const checkIfAdmin = async (societyId,user,event) => {
         return false
     }
 
-    if(!event.organisers.includes(user._id) &&  society.owner.toString() !== user._id.toString()){
+    if(!event.organisers.some(id => id.equals(user._id)) && society.owner.toString() !== user._id.toString()){
       return false
     }
 
-    if (  !society.admins.map(id => id.toString()).includes(user._id.toString()) &&
-            society.owner.toString() !== user._id.toString()
-    )
-    {
+    if (
+        !society.admins.some(id => id.toString() === user._id.toString()) &&
+        society.owner.toString() !== user._id.toString()
+    ) {
         return false
     }
 
@@ -101,7 +98,7 @@ export const createEvent = async (req, res, next) => {
         return res.status(400).json({ message: "Society not found" })
     }
 
-    if (  !society.admins.includes(user._id) && society.owner.toString() !== user._id.toString()){
+    if (!society.admins.some(id => id.equals(user._id)) && society.owner.toString() !== user._id.toString()){
         return res.status(401).json({ message: "You are not authorised with this society"})
     }
 
@@ -126,7 +123,7 @@ export const createEvent = async (req, res, next) => {
     if (organisers) {
         organisers.forEach((id) => {
             if (
-                society.admins.map((a) => a.toString()).includes(id.toString()) ||
+                society.admins.some(a => a.toString() === id.toString()) ||
                 society.owner.toString() === id.toString()
             ) {
                 organisersPayload.push(id);
@@ -184,6 +181,7 @@ export const createEvent = async (req, res, next) => {
   }
 };
 
+
 export const editEvent = async (req, res, next) => {
   try {
     const { user } = req
@@ -216,11 +214,11 @@ export const editEvent = async (req, res, next) => {
     if (description){
       event.description = description
     }
-    if (image.trim()){
+    if (image && image.trim()){
       const upload = await cloudinary.uploader.upload(image);
       event.image = upload.secure_url;
     }
-    if ( image && !image.trim()){
+    if (image && !image.trim()){
       event.image = ""
     }
     if (specialAttraction){
@@ -243,6 +241,7 @@ export const editEvent = async (req, res, next) => {
     next(error)
   }
 }
+
 export const deleteEvent = async (req, res, next) => {
   try {
     const { user } = req
@@ -267,18 +266,19 @@ export const deleteEvent = async (req, res, next) => {
     next(error)
   }
 }
+
 export const fetchAdmins = async (req,res,next) => {
     try {
         const { user } = req
         const societyId = req.params.id
 
-        if ( !societyId ){
+        if (!societyId){
             return res.status(400).json({ message: "societyId missing" })
         }
 
         const society = await Societies.findById(societyId).populate("admins","_id name email profilePic mobileNumber")
 
-        if ( ! society.admins.map(a => a._id.toString()).includes(user._id.toString()) && society.owner.toString() !== user._id.toString() ){
+        if (!society.admins.some(a => a._id.equals(user._id)) && society.owner.toString() !== user._id.toString()){
             return res.status(403).json({ message: "Unauthorized access" })
         }
 

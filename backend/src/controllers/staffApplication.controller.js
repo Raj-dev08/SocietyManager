@@ -60,11 +60,11 @@ export const applyForStaffRole = async (req, res, next) => {
 
     const society = application.societyId
     
-    if (application.applicants.includes(user._id)) {
+    if (application.applicants.some(id => id.equals(user._id))) {
       return res.status(400).json({ message: "Already applied for this opening" });
     }
 
-    if(society.staff.includes(user._id)){
+    if(society.staff.some(id => id.equals(user._id))){
       return res.status(400).json({ message: "already a staff member of this society"})
     }
 
@@ -146,11 +146,11 @@ export const approveStaff = async (req, res, next) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    
-    if (!app.applicants.map(id => id.toString()).includes(applicantId)) {
+    if (!app.applicants.some(id => id.equals(applicantId))) {
       return res.status(400).json({ message: "User did not apply for this opening" });
     }
-    if ( society.staff.map(id => id.toString()).includes(applicantId)){
+
+    if (society.staff.some(id => id.equals(applicantId))){
       return res.status(400).json({ message: "User is already a staff"})
     }
 

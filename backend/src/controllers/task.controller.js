@@ -21,7 +21,7 @@ const checkIfSocietyAdmin = async(societyId,userId) => {
         return false
     }
 
-    if ( !society.admins.map(id => id.toString()).includes(userId.toString())){
+    if (!society.admins.some(id => id.toString() === userId.toString())){
         return false
     }
 
@@ -104,7 +104,6 @@ export const getAllMyPendingTasks = async (req,res,next) => {
         if(cachedTasks){
             return res.status(200).json({ tasks: JSON.parse(cachedTasks) })
         }
-
 
         const tasks = await Tasks.find({ societyId, assignedTo: user._id , verifiedByOwner: false}).sort({ deadLine: -1})
 
@@ -223,8 +222,7 @@ export const verifiedByOwner = async (req,res,next) => {
             })
         }
 
-
-        await redis.del(`All-tasks:${task.assignedTo}from:${task.societyId}`)
+        await redis.del(`All-tasks:${task.assignedTo._id}from:${task.societyId}`)
         return res.status(200).json({ message: "Successfully marked as Done"})
     } catch (error) {
         next(error)

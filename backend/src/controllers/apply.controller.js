@@ -24,7 +24,7 @@ export const applyForSociety = async (req, res, next) => {
       return res.status(404).json({ message: "Society not found" });
     }
 
-    if ( society.members.includes(user._id) ){
+    if ( society.members.some(m => m.equals(user._id)) ){
         return res.status(400).json({ message: "Already a member of the society "})
     }
 
@@ -71,7 +71,10 @@ export const approveApplication = async (req, res, next) => {
     const society = application.appliedFor;
     const applicant = application.applicant;
 
-    if (society.owner.toString() !== user._id.toString() && !society.admins.includes(user._id)) {
+    if (
+      society.owner.toString() !== user._id.toString() &&
+      !society.admins.some(a => a.equals(user._id))
+    ) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -81,12 +84,12 @@ export const approveApplication = async (req, res, next) => {
     const updatedApp = await application.save();
 
     applicant.societyId = society._id
-
     await applicant.save()
+
     // Add applicant to society members
-    if (!society.members.includes(application.applicant)) {
-      society.members.push(application.applicant);
-      society.memberCount+=1
+    if (!society.members.some(m => m.equals(application.applicant._id))) {
+      society.members.push(application.applicant._id);
+      society.memberCount += 1
 
       const { houseNo } = application;
 
@@ -97,12 +100,12 @@ export const approveApplication = async (req, res, next) => {
         // Create new flat if not exists
         society.flats.push({
           houseNo,
-          houseMembers: [application.applicant]
+          houseMembers: [application.applicant._id]
         });
       } else {
         // Add member if not already present
-        if (!flat.houseMembers.includes(application.applicant)) {
-          flat.houseMembers.push(application.applicant);
+        if (!flat.houseMembers.some(h => h.equals(application.applicant._id))) {
+          flat.houseMembers.push(application.applicant._id);
         }
       }
 
@@ -110,8 +113,8 @@ export const approveApplication = async (req, res, next) => {
     }
 
     await deleteApplicationCache(society._id)
-    await redis.del(`MyApplication:${application.applicant}`)
-    await redis.set(`Society:${society._id}`,JSON.stringify(society), "EX" , 60 * 60 * 24 )
+    await redis.del(`MyApplication:${application.applicant._id}`)
+    await redis.set(`Society:${society._id}`, JSON.stringify(society), "EX", 60 * 60 * 24)
 
     return res.status(200).json({ message: "Application approved", application: updatedApp });
   } catch (error) {
@@ -131,7 +134,10 @@ export const rejectApplication = async (req, res, next) => {
     }
 
     const society = application.appliedFor;
-    if (society.owner.toString() !== user._id.toString() && !society.admins.includes(user._id)) {
+    if (
+      society.owner.toString() !== user._id.toString() &&
+      !society.admins.some(a => a.equals(user._id))
+    ) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -142,7 +148,7 @@ export const rejectApplication = async (req, res, next) => {
 
     await deleteApplicationCache(society._id)
     await redis.del(`MyApplication:${application.applicant}`)
-    await redis.set(`Society:${society._id}`,JSON.stringify(society), "EX" , 60 * 60 * 24 )
+    await redis.set(`Society:${society._id}`, JSON.stringify(society), "EX", 60 * 60 * 24)
 
     return res.status(200).json({ message: "Application rejected", application: updatedApp });
   } catch (error) {
@@ -165,7 +171,10 @@ export const getApplications = async (req, res, next) => {
         return res.status(404).json({ message: "Society not found "})
     }
 
-    if ( society.owner.toString() !== user._id.toString() && !society.admins.includes(user._id)){
+    if (
+      society.owner.toString() !== user._id.toString() &&
+      !society.admins.some(a => a.equals(user._id))
+    ){
         return res.status(403).json({ message: "Unauthorized"})
     }
 
@@ -192,7 +201,6 @@ export const getApplications = async (req, res, next) => {
       .lean();
 
     await redis.set(cacheKey, JSON.stringify(applications), "EX" , 60 * 60 * 24 )
-
 
     return res.status(200).json({ applications });
   } catch (error) {

@@ -33,7 +33,7 @@ export const giveAdminAccess = async (req,res,next) => {
         }
 
         
-        if ( ! society.members.includes(targetedUser._id) || society.admins.includes(targetedUser._id) ){
+        if ( ! society.members.some( id => id.toString() === targetedUser._id.toString()) || society.admins.some( id => id.toString() === targetedUser._id.toString() ) ){
             return res.status(400).json({ message: "Targeted user is either not a member or already an admin"})
         }
 
@@ -91,7 +91,7 @@ export const takeAdminAccess = async (req,res,next) => {
             return res.status(404).json({ message: "User doesnt exist"})
         }
 
-        if ( society.members.includes(targetedUser._id) || !society.admins.includes(targetedUser._id) ){
+        if ( society.members.some( id => id.toString() === targetedUser._id.toString()) || !society.admins.some( id => id.toString() === targetedUser._id.toString() ) ){
             return res.status(400).json({ message: "Targeted user is either not a admin or already an member"})
         }
 

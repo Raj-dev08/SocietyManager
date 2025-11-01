@@ -2,6 +2,8 @@ import Staffs from "../models/staff.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import StaffApplications from "../models/staffapplication.model.js";
 import Societies from "../models/society.model.js";
+import { sendNotificationToFCM } from "../lib/fcm.js";
+import Visit from "../models/visit.model.js";
 
 export const becomeStaff = async (req,res,next) => {
     try {
@@ -21,7 +23,7 @@ export const becomeStaff = async (req,res,next) => {
             return res.status(400).json({ message: "Invalid time format"})
         }
 
-        if ( ["security","maintenance","cleaning"].includes(roleDescription.toLowerCase())){
+        if (! ["security","maintenance","cleaning"].includes(roleDescription.toLowerCase())){
             return res.status(400).json({ message: "Invalid role"})
         }
 
@@ -77,7 +79,7 @@ export const uploadResume = async(req,res,next) => {
 export const checkForJobs = async (req, res, next) => {
     try {
         const { user } = req;
-        const { maxDistanceKm } = req.body || 10
+        const maxDistanceKm  = req.body?.maxDistanceKm || 10
 
         if(isNaN(maxDistanceKm)){
             return res.status(400).json({ message: "distance must be a number"})
@@ -113,3 +115,96 @@ export const checkForJobs = async (req, res, next) => {
         next(error);
     }
 };
+
+export const checkVisit = async (req,res,next) => {
+    try {
+        const { user } = req
+        const { societyId } = req.params
+
+        if(!societyId){
+            return res.status(400).json({ message: "society id not available"})
+        }
+
+        if( user.role !== "Staff" ){
+            return res.status(400).json({ message: "User is not a staff"})
+        }
+
+        if(user.userType.roleDescription !== "security"){
+            return res.status(400).json({ message: "Only for security guards"})
+        }
+
+        const society = await Societies.findById(societyId).populate({
+            path:"scheduledVisit",
+            populate: [
+                { path: "visitor" },
+                { path: "visitFor" }
+            ]
+        })
+
+        if(!society){
+            return res.status(404).json({ message: "Society not found"})
+        }
+
+        if(!society.staff.some(id => id.equals(user._id))){
+            return res.status(403).json({ message: "Not a staff of this society"})
+        }
+
+        const visit = society.scheduledVisit
+
+        if(visit.length === 0 ){
+            return res.status(400).json({ message: "No scheduled visit"})
+        }
+        
+        return res.status(200).json({ visit })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const notifyVisit = async (req,res,next) => {
+    try {
+        const { user } = req
+        const { visitId } = req.params
+
+        if(!visitId){
+            return res.status(400).json({ message: "Visit id is required"})
+        }
+
+        if( user.role !== "Staff" ){
+            return res.status(400).json({ message: "User is not a staff"})
+        }
+
+        if(user.userType.roleDescription !== "security"){
+            return res.status(400).json({ message: "Only for security guards"})
+        }
+
+        const visit = await Visit.findById(visitId)
+                        .populate("visitFor","fcmToken")
+                        .populate("visitor","name")
+                        .populate("societyId","staff")
+
+        if (!visit){
+            return res.status(404).json({ message: "visit not available"})
+        }
+
+        if (!visit.societyId.staff.some(id => id.equals(user._id))){
+            return res.status(403).json({ message: "Not a staff of this society "})
+        }
+
+        if(visit.status!=="accepted"){
+            return res.status(400).json({ message: "Visit not yet accepted. Contact the resident."})
+        }
+
+        if (visit.visitFor.fcmToken){
+            const message = `${visit.visitor.name} has arrived for a visit`
+            await sendNotificationToFCM(visit.visitFor.fcmToken,{
+                title: "Your visitor has arrived 🎉",
+                body: message
+            })
+        }
+
+        return res.status(200).json({ message: "Successfully sent the message"})
+    } catch (error) {
+        next(error)
+    }
+}

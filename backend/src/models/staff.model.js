@@ -5,13 +5,7 @@ const staffSchema = new mongoose.Schema(
     societyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Societies",
-    },
-    tasks: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Task"
-      }
-    ],
+    },//no task for now cuz staff roles are manual mostly 
     isAvailableForWork: {
       type: Boolean,
       default: true

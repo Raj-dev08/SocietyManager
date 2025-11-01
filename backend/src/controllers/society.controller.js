@@ -6,6 +6,13 @@ import Notices from "../models/notice.model.js";
 import Events from "../models/events.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
+import Razorpay from "razorpay";
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
 
 export const createSociety = async (req,res,next) => {
     try {
@@ -30,11 +37,32 @@ export const createSociety = async (req,res,next) => {
         if (imageArray && imageArray.length > 0) {
           const uploads = await Promise.allSettled(
               imageArray.map(img => cloudinary.uploader.upload(img))
-          );//making sure not the whole thing crashes for 1 image fail
+          );
 
           uploadedImages = uploads
               .filter(r => r.status === "fulfilled")
               .map(r => r.value.secure_url);
+        }
+
+        let razorpayAccount;
+        try {
+          const account = await razorpay.accounts.create({
+            business_type: "individual",
+            name: name,  
+            email: user.email,
+            contact: user.phone,
+            type: "sub_account", 
+            payout_currency: "INR"
+          });
+
+          razorpayAccount = {
+            accountId: account.id,
+            status: account.status,
+            email: account.email,
+            phone: account.contact
+          };
+        } catch (err) {
+          console.error("Razorpay account creation failed", err);
         }
 
         const newSociety = new Societies({
@@ -45,18 +73,61 @@ export const createSociety = async (req,res,next) => {
             lng,
             locationName,
             landMark,
-            images:  uploadedImages.length > 0 ? uploadedImages : []
+            images:  uploadedImages.length > 0 ? uploadedImages : [],
+            razorpayAccount: razorpayAccount || {}
         })
 
         const savedSociety = await newSociety.save()
 
-        await redis.set(`Society:${savedSociety._id}`, JSON.stringify(savedSociety), "EX" , 60 * 60 * 24 ) // save society details
+        await redis.set(`Society:${savedSociety._id}`, JSON.stringify(savedSociety), "EX" , 60 * 60 * 24 )
 
         return res.status(201).json({ message: "Society created successfully", society: savedSociety })
     } catch (error) {
         next(error)
     }
 }
+export const addBankDetails = async (req, res, next) => {
+  try {
+    const { user } = req;
+    const { societyId } = req.params;
+    const { account_number, ifsc, name } = req.body;
+
+    const society = await Societies.findById(societyId);
+    if (!society) return res.status(404).json({ message: "Society not found" });
+
+    if (society.owner.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: "Only owner can add bank details" });
+    }
+
+    if (!society.razorpayAccount?.accountId) {
+      return res.status(400).json({ message: "Razorpay account not created" });
+    }
+
+    const fundAccount = await razorpay.fundAccounts.create({
+      account_type: "bank_account",
+      contact: {
+        name,
+        email: user.email,
+        contact: user.mobileNumber
+      },
+      bank_account: {
+        name,
+        ifsc,
+        account_number
+      }
+    });
+
+    // Save fundAccount ID to society if you want to track it
+    society.razorpayAccount.fundAccountId = fundAccount.id;
+    society.razorpayAccount.status = "active";
+    await society.save();
+
+    res.status(200).json({ message: "Bank details added successfully", fundAccount });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export const editSociety = async (req, res, next) => {
   try {
@@ -74,7 +145,7 @@ export const editSociety = async (req, res, next) => {
     }
 
     // Only owner or admins can edit
-    if (society.owner.toString() !== user._id.toString() && !society.admins.includes(user._id)) {
+    if (society.owner.toString() !== user._id.toString() && !society.admins.some(id => id.toString() === user._id.toString())) {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
@@ -125,7 +196,7 @@ export const deleteSociety = async (req,res,next) => {
 
         await User.updateMany(
           { societyId },
-          { $unset: { societyId: "" } } // removes the field
+          { $unset: { societyId: "" } }
         );
 
         await Application.deleteMany({
@@ -198,10 +269,8 @@ export const getSocieties = async (req, res, next) => {
       }
       sortCondition[field] = order;
     } else {
-      // Default sorting
       sortCondition = { createdAt: -1 };
     }
-    
 
     if (search) {
       searchConditions.$text = { $search: search };
@@ -224,4 +293,3 @@ export const getSocieties = async (req, res, next) => {
     next(error);
   }
 };
-

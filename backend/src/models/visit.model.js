@@ -26,6 +26,10 @@ const visitSchema = new mongoose.Schema(
             required: true,
             default: "pending",
             enum : ["accepted","pending","rejected"]
+        },
+        hasArrived: {
+            type: Boolean,
+            default: false
         }
     }
 )

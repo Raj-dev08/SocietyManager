@@ -1,7 +1,6 @@
 import User from "../models/user.model.js";
 import Owners from "../models/owner.model.js";
 
-
 export const giveOwnerPermission = async (req,res,next) => {
     try {
         const { user } = req
