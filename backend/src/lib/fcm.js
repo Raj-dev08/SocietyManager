@@ -6,7 +6,7 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(serviceAccount),
   });
 }
-
+//TO-DO : Add screen based notification so u can go to the page but overkill for prototype
 export const sendNotificationToFCM = async (token, payload) => {
   try {
     await admin.messaging().send({

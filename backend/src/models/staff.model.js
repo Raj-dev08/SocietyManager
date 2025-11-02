@@ -27,10 +27,6 @@ const staffSchema = new mongoose.Schema(
       type:Number,
       required:true
     },
-    location: {
-      type: { type: String, default: "Point" },
-      coordinates: { type: [Number], default: [0,0] } // [lng, lat]
-    },
     locationName:{
       type:String,
       required:true
@@ -53,16 +49,7 @@ const staffSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Before saving staff
-staffSchema.pre("save", function(next) {
-    this.location = {
-        type: "Point",
-        coordinates: [this.lng, this.lat]
-    };
-    next();
-});
-
-staffSchema.index({ location: "2dsphere" });
+//no need of geonear cuz we dont find staff
 
 
 const Staffs = mongoose.model("Staff", staffSchema);

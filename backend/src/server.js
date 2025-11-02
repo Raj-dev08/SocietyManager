@@ -22,6 +22,8 @@ import taskRoutes from './routes/task.routes.js'
 import staffRoutes from './routes/staff.routes.js'
 import staffApplicationRoutes from './routes/staffapplication.routes.js'
 import billsRoutes from './routes/bills.routes.js'
+import friendRoutes from './routes/friends.routes.js'
+import vendorRoutes from './routes/vendor.routes.js'
 
 const app = express(); 
 
@@ -53,6 +55,8 @@ app.use("/api/v0/task",protectRoute, taskRoutes)
 app.use("/api/v0/staff",protectRoute, staffRoutes)
 app.use("/api/v0/staffApplication",protectRoute, staffApplicationRoutes)
 app.use("/api/v0/bills", billsRoutes)
+app.use("/api/v0/friends", protectRoute, friendRoutes)
+app.use("/api/v0/vendor", protectRoute, vendorRoutes)
 
 app.use(errorHandler)
 

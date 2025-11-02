@@ -199,3 +199,96 @@ export const razorpayWebhook = async (req, res, next) => {
     next(err);
   }
 };
+
+export const applyForCashPayment = async (req, res, next) => {
+  try {
+    const { user } = req;
+    const { billId  , societyId , houseNo } = req.params
+
+    if( !billId || !societyId || !houseNo ){
+      return res.status(400).json({ message: "All fields required"})
+    }
+
+    const society = await Societies.findById(societyId)
+    if(!society) return res.status(404).json({ message: "Society not found"})
+
+    const flat = society.flats.find(f => f.houseNo === houseNo)
+    if(!flat) return res.status(404).json({ message: "Flat not found"})
+
+    if ( ! flat.houseMembers.some(m => m.equals(user._id)) ) {
+      return res.status(400).json({ message: "Not a member of the flat "})
+    }
+    
+    const bill = await Bills.findById(billId)
+    if(!bill) return res.status(404).json({ message: "Bill not found"})
+    
+    bill.isPaidCash = true
+    await bill.save()
+
+    return res.status(200).json({ message: "Cash payment applied"})
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const verifyCashPayment = async (req, res, next) => {
+  try {
+    const { user } = req
+    const { societyId , billId } = req.params
+    if (!societyId || !billId){
+      return res.status(400).json({ message: "Society Id and billID is required "})
+    }
+
+    const society = await Societies.findById(societyId)
+    if(!society) return res.status(404).json({ message: "Society not found"})
+
+    if ( ! society.admins.some(a => a.equals(user._id)) || !society.owner.equals(user._id) ){
+      return res.status(403).json({ message: "Unauthorized"})
+    }
+
+    const bill = await Bills.findById(billId)
+    if(!bill) return res.status(404).json({ message: "Bill not found"})
+
+    if(!bill.isPaidCash) return res.status(400).json({ message: "Cash payment not done"})
+    bill.cashPaymentVerified = true
+    await bill.save()
+
+    return res.status(200).json({ message: "Cash payment verified"})
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const deleteBills = async (req, res, next) => {
+  try {
+    const { user } = req;
+    const { billId ,societyId } = req.params;
+
+    if(!billId || !societyId) return res.status(400).json({ message: "Bill ID required" });
+
+    const society = await Societies.findById(societyId);
+
+    if ( ! society.admins.some(a => a.equals(user._id)) || !society.owner.equals(user._id) ){
+      return res.status(403).json({ message: "Unauthorized"})
+    }
+
+    const bill = await Bills.findById(billId);
+    if(!bill) return res.status(404).json({ message: "Bill not found" });
+
+    const flat = society.flats.find(f => f.houseNo === bill.houseNo);
+    if (!flat) {
+      return res.status(404).json({ message: "Flat not found for this bill" });
+    } 
+    flat.bills.pull(billId);
+    await society.save();
+   
+
+    await Bills.findByIdAndDelete(billId);
+
+    await redis.del(`Bills:${society._id}`);
+    await redis.del(`Society:${society._id}`);
+    res.status(200).json({ message: "Bill deleted successfully" });
+  } catch (error) {
+    next(error)
+  }
+}

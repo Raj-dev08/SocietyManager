@@ -4,7 +4,10 @@ import {
   getBillsForFlat,
   payBill,
   verifyPayment,
-  razorpayWebhook
+  razorpayWebhook,
+  applyForCashPayment,
+  verifyCashPayment,
+  deleteBills
 } from "../controllers/bills.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
@@ -15,6 +18,9 @@ router.post("/:societyId", protectRoute, createBill);
 router.get("/:societyId/:houseNo", protectRoute, getBillsForFlat);
 router.post("/pay/:billId", protectRoute, payBill);
 router.post("/verify", protectRoute, verifyPayment);
+router.post("/apply/:billId/:societyId/:houseNo", protectRoute, applyForCashPayment)
+router.post("/verify/:societyId/:billId", protectRoute, verifyCashPayment)
+router.delete("/delete/:billId/:societyId", protectRoute, deleteBills)
 
 router.post(
   "/webhook",

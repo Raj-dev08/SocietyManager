@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema(
     description: {
         type: String,
     },
+    friends: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User" 
+        }
+    ],
     role:{
         type:String,
         required: true,

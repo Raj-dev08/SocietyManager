@@ -165,9 +165,59 @@ export const approveStaff = async (req, res, next) => {
 
     await deleteStaffAppCache(society._id);
     await redis.del(`MyStaffApplications:${applicant._id}`);
+    await StaffApplications.findByIdAndDelete(applicationId);
 
     return res.status(200).json({ message: "Staff hired successfully", staff: applicant });
   } catch (err) {
     next(err);
   }
 };
+
+export const fireStaff = async (req,res,next) => {
+  try {
+    const { user } = req
+    const { societyId , staffId } = req.params
+
+    if ( user.role !== "Owner"){
+      return res.status(403).json({ message: "Only for owner"})
+    }
+
+    const staff = await User.findById(staffId).populate("userType")
+
+    if(!staff){
+      return res.status(404).json({ message: "Staff not found"})
+    }
+
+    if(staff.role !== "Staff"){
+      return res.status(400).json({ message: "User is not a staff"})
+    }
+
+    if (!applicant.userType) {
+      return res.status(400).json({ message: "Invalid staff userType" });
+    }
+
+
+    const society = await Societies.findById(societyId)
+
+    if(!society){
+      return res.status(404).json({ message: "Society not found"})
+    }
+
+    if(!society.owner.equals(user._id)){
+      return res.status(403).json({ message: "Only owner can fire staff"})
+    }
+
+    if(!society.staff.some(id => id.toString() === staffId.toString())){
+      return res.status(400).json({ message: "User is not a staff"})
+    }
+
+    society.staff.pull(staffId)
+    staff.userType.societyId = null
+    await staff.userType.save()
+    await society.save()
+
+    return res.status(200).json({ message: "Staff fired successfully"})
+  } catch (error) {
+    next(error)
+  }
+}

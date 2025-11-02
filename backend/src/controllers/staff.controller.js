@@ -208,3 +208,43 @@ export const notifyVisit = async (req,res,next) => {
         next(error)
     }
 }
+
+export const setIsAvailableToFalse = async (req,res,next) => {
+    try {
+        const { user } = req
+        
+        if(user.role !== "Staff"){
+            return res.status(403).json({ message: "Only for staff"})
+        }
+
+        if ( user.userType.societyId ){
+            return res.status(400).json({ message: "Cant set to false while working in a society"})
+        }
+
+        user.userType.isAvailableForWork = false
+        await user.userType.save()
+
+        return res.status(200).json({ message: "Successfully set to false"})
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const setIsAvailableToTrue = async (req,res,next) => {
+    try {
+        const { user } = req
+        
+        if(user.role !== "Staff"){
+            return res.status(403).json({ message: "Only for staff"})
+        }
+
+        user.userType.isAvailableForWork = true
+        await user.userType.save()
+
+        return res.status(200).json({ message: "Successfully set to true"})
+    } catch (error) {
+        next(error)
+    }
+}
+
+// not adding the leave for user so they cant just leave and abuse it to leave they have to ask the owner

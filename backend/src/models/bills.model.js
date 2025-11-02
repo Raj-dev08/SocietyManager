@@ -12,16 +12,16 @@ const billSchema = new mongoose.Schema(
       required: true
     },
     amount: { 
-        type: Number,
-        required: true 
+      type: Number,
+      required: true 
     },
     dueDate: {
-        type: Date, 
-        required: true 
+      type: Date, 
+      required: true 
     },
     paid: { 
-        type: Boolean, 
-        default: false
+      type: Boolean, 
+      default: false
     },
     paidBy: { 
       type: mongoose.Schema.Types.ObjectId, 
