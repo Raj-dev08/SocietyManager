@@ -278,3 +278,19 @@ export const getItemDetails = async (req, res, next) => {
         next(error)
     }
 }
+
+//can add caching later 
+export const getMyItems = async (req,res,next) => {
+    try {
+        const { user } = req
+
+        const items = await Items.find({ seller: user._id }).sort({ createdAt: -1 })
+
+        if ( items.length === 0 ){
+            return res.status(200).json({ message: "No items found"})
+        }
+        return res.status(200).json({ items })
+    } catch (error) {
+        next(error)
+    }
+}
