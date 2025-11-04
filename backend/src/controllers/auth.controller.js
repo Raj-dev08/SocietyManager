@@ -113,6 +113,7 @@ export const verifyOTP = async (req,res,next) => {
   }
 }
 
+//add fcm on each login for safety
 export const login = async (req, res) => {
     const { email, password} = req.body;
 

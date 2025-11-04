@@ -2,6 +2,7 @@ import FriendRequest from "../models/friendrequest.model.js";
 import User from "../models/user.model.js";
 import { redis } from "../lib/redis.js";
 import { sendNotificationToFCM } from "../lib/fcm.js";
+import Message from "../models/message.model.js";
 
 export const searchUser = async (req, res, next) => {
   try {
@@ -160,7 +161,7 @@ export const acceptFriendRequest = async (req, res, next) => {
     const { user } = req;
     const { requestId } = req.params;
 
-    const request = await FriendRequest.findById(requestId);
+    const request = await FriendRequest.findById(requestId).populate("sender");
     if (!request) return res.status(404).json({ message: "Request not found" });
 
     if (request.receiver.toString() !== user._id.toString()){
@@ -172,7 +173,9 @@ export const acceptFriendRequest = async (req, res, next) => {
         return res.status(400).json({ message: "Request already processed" });
     }
       
-    const sender= await User.findById(request.sender);
+    const sender= request.sender;
+
+    if(!sender) return res.status(404).json({ message: "Sender not found" });
 
     if(!user.friends.includes(sender._id)) {
         user.friends.push(sender._id);
@@ -188,7 +191,11 @@ export const acceptFriendRequest = async (req, res, next) => {
     await sender.save();
 
     await redis.del(`FriendReq_To:${user._id}`);
-    await redis.del(`FriendReq_From:${request.sender}`);
+    await redis.del(`FriendReq_From:${sender._id}`);
+
+    await redis.del(`friends:${user._id}`);
+    await redis.del(`friends:${sender._id}`);
+
 
 
     if (sender.fcmToken){
@@ -252,16 +259,60 @@ export const cancelFriendRequest = async (req, res, next) => {
   }
 };
 
-//TO_DO: improve it with caching and more features
+
 export const getAllFriends = async (req, res, next) => {
   try {
     const { user } = req;
 
-    const me = await User.findById(user._id)
-      .populate("friends", "name email profilePic")
-      .lean();
+    const cachedFriends = JSON.parse(await redis.get(`friends:${user._id}`));
 
-    return res.status(200).json({ friends: me.friends || [] });
+    let userUnseenMap={};
+
+    if (cachedFriends) {
+        const unreadCounts = await Promise.all(
+          cachedFriends.map(async (friend) => {
+              const unreadCount = await Message.countDocuments({
+                  receiverId: user._id,
+                  senderId: friend._id,
+                  isSeen: false,
+              });
+
+              return { id: friend._id, unreadCount };
+              })
+        );
+
+        unreadCounts.forEach((uc)=>{
+            userUnseenMap[uc.id]=uc.unreadCount;
+        })
+        return res.status(200).json({friends: cachedFriends,unreadCounts:userUnseenMap});
+    }
+
+    const userAcc= await User.findById(user._id).populate("friends", "name profilePic email description friends projects");
+
+    if(userAcc.friends.length === 0) {
+        return res.status(404).json({message: "No friends found"});
+    }
+
+    const unreadCounts = await Promise.all(
+        userAcc.friends.map(async (friend) => {
+            const unreadCount = await Message.countDocuments({
+                receiverId: user._id,
+                senderId: friend._id,
+                isSeen: false,
+            });
+
+            return { id: friend._id, unreadCount };
+            })
+        );
+
+    unreadCounts.forEach((uc)=>{
+        userUnseenMap[uc.id]=uc.unreadCount;
+    })
+
+    await redis.set(`friends:${user._id}`, JSON.stringify(userAcc.friends),"EX", 60 * 60 ); // Cache for 1 hour
+
+
+     return res.status(200).json({ friends:userAcc.friends, unreadCounts:userUnseenMap });
   } catch (error) {
     next(error);
   }

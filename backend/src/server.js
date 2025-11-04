@@ -7,6 +7,8 @@ import { connectDB } from "./lib/db.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { protectRoute } from "./middleware/auth.middleware.js";
 
+import { app, server } from "./lib/socket.js";
+
 
 import authRoutes from './routes/auth.routes.js'
 import societyRoutes from './routes/society.routes.js'
@@ -24,8 +26,10 @@ import staffApplicationRoutes from './routes/staffapplication.routes.js'
 import billsRoutes from './routes/bills.routes.js'
 import friendRoutes from './routes/friends.routes.js'
 import vendorRoutes from './routes/vendor.routes.js'
+import itemRoutes from './routes/item.routes.js'
+import messageRoutes from './routes/message.routes.js'
 
-const app = express(); 
+
 
 dotenv.config();
 
@@ -57,11 +61,15 @@ app.use("/api/v0/staffApplication",protectRoute, staffApplicationRoutes)
 app.use("/api/v0/bills", billsRoutes)
 app.use("/api/v0/friends", protectRoute, friendRoutes)
 app.use("/api/v0/vendor", protectRoute, vendorRoutes)
+app.use("/api/v0/item", itemRoutes)
+app.use("/api/v0/message", protectRoute, messageRoutes)
+
+
 
 app.use(errorHandler)
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);
   connectDB();
 });
