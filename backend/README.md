@@ -18,6 +18,7 @@ Built with scalability, modularity, and real-time capabilities at its core.
 ---
 
 ## 📁 Project Structure
+```
 backend/
 ├── controllers/ # Business logic for each module
 ├── routes/ # API route definitions
@@ -27,7 +28,7 @@ backend/
 ├── utils/ # Helpers and constants
 ├── server.js # Entry point
 └── .env # Environment variables
-
+```
 
 ---
 
@@ -108,7 +109,7 @@ backend/
 
 ```mermaid
 graph TD
-  A[Frontend - React] --> B[Express Backend]
+  A[Frontend - React Native] --> B[Express Backend]
   B --> C[MongoDB Database]
   B --> D[Redis Cache]
   B --> E[JWT Auth System]
@@ -117,8 +118,7 @@ graph TD
   F --> H[Staff Management Module]
   F --> I[Member & Society Module]
   F --> J[Work Request & Complaint Module]
-  B --> K[Socket.IO (Planned Realtime Layer)]
-  B --> L[CI/CD Pipeline - Docker & Jenkins]
+  B --> K[Socket.IO]
 
 ```
 
