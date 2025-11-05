@@ -28,6 +28,8 @@ import friendRoutes from './routes/friends.routes.js'
 import vendorRoutes from './routes/vendor.routes.js'
 import itemRoutes from './routes/item.routes.js'
 import messageRoutes from './routes/message.routes.js'
+import groupChatRoutes from './routes/groupchat.routes.js'
+
 
 
 
@@ -63,6 +65,8 @@ app.use("/api/v0/friends", protectRoute, friendRoutes)
 app.use("/api/v0/vendor", protectRoute, vendorRoutes)
 app.use("/api/v0/item", itemRoutes)
 app.use("/api/v0/message", protectRoute, messageRoutes)
+app.use("/api/v0/groupchat", protectRoute, groupChatRoutes)
+
 
 
 
