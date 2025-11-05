@@ -12,8 +12,8 @@ Built with scalability, modularity, and real-time capabilities at its core.
 - 🔥 **Redis** — caching & optimization
 - ⚡ **Socket.IO** — real-time messaging
 - 🔐 **JWT Authentication** — secure, role-based access
-- 🐳 **Docker + DevOps ready**
-- 🔁 **CI/CD compatible architecture**
+- ⏲ **BackGround Jobs** — **BullMq** for background jobs
+- 🔔 **Notifications with google cloud messaging (fcm)**
 
 ---
 
@@ -31,21 +31,46 @@ backend/
 
 ---
 
+
 ## 🚀 Features
 
-✅ Authentication & Authorization  
-✅ Role-based access (Admin, Staff, Vendor, Resident)  
-✅ Real-time chat (personal + group)  
-✅ Society management (applications, notices, visits)  
-✅ Complaint tracking system  
-✅ Event management system  
-✅ Vendor management + service offers  
-✅ Staff applications and approvals  
-✅ Bill management and records  
-✅ Friends system and social connectivity  
-✅ Task assignment system  
-✅ Notification system with updates  
-✅ Scalable architecture (modular and redis integrated)
+### 👥 Members & Authentication
+- JWT-based authentication with secure cookie storage.  
+- Member registration & login.  
+- Role-based access (Admin, Member, Vendor).  
+- Profile management.
+
+### 🏢 Society Management
+- Create and manage societies.  
+- Add blocks, flats, and link members.  
+- Assign admins and manage roles.
+
+### 🧾 Notices & Announcements
+- Admins can post notices.  
+- Members get updates instantly via dashboard.  
+- Expiry-based filtering for active/archived notices.
+
+### 🧰 Vendor & Work Management
+- Vendors can register and offer services.  
+- Societies can create **work requests** and assign vendors.  
+- Status tracking for each request (Pending → In Progress → Completed).  
+- Vendor availability and service type management.
+
+### 💼 Staff System
+- Add & manage staff (security, cleaners, etc).  
+- Attendance tracking and role allocation.  
+
+### 💬 Complaints & Feedback
+- Members can raise issues with categories & attachments.  
+- Admins can mark status and resolve complaints.
+
+### 💰 Payment & Bill Tracking 
+- Integration-ready for online/offline payments and bill tracking.  
+
+### ⚡ Performance & Reliability
+- Redis caching for fast data retrieval.  
+- Background jobs for heavy tasks.  
+- Modular route-based backend structure for scalability.
 
 ---
 
@@ -75,6 +100,27 @@ backend/
 
 ✅ = Requires JWT via `protectRoute` middleware  
 ❌ = Public access (auth handled inside routes)
+
+---
+
+
+## 🧠 System Overview (Mermaid Diagram)
+
+```mermaid
+graph TD
+  A[Frontend - React] --> B[Express Backend]
+  B --> C[MongoDB Database]
+  B --> D[Redis Cache]
+  B --> E[JWT Auth System]
+  B --> F[Vendor/Staff/Member Controllers]
+  F --> G[Vendor Service Module]
+  F --> H[Staff Management Module]
+  F --> I[Member & Society Module]
+  F --> J[Work Request & Complaint Module]
+  B --> K[Socket.IO (Planned Realtime Layer)]
+  B --> L[CI/CD Pipeline - Docker & Jenkins]
+
+```
 
 ---
 
