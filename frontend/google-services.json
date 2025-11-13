@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "161468323671",
+    "project_id": "messaging-2e704",
+    "storage_bucket": "messaging-2e704.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161468323671:android:2d6e69beee19367e349012",
+        "android_client_info": {
+          "package_name": "com.societymanager.societyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB8d0C758c663lfEVqtVbKrPk45voTxlY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

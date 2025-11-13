@@ -30,3 +30,23 @@ export const sendNotificationToFCM = async (token, payload) => {
     console.error("FCM error for token:", token, err);
   }
 };
+
+// Or use Expo notifications (Last resort)
+
+export const sendNotificationToExpo = async (expoPushToken, payload) => {
+  try {
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: expoPushToken,
+        title: payload.title,
+        body: payload.body,
+        sound: "default",
+        data: payload.data || {},
+      }),
+    });
+  } catch (err) {
+    console.error("Expo push error for token:", expoPushToken, err);
+  }
+};

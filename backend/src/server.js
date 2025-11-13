@@ -42,7 +42,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     credentials: true,
   })
 );
@@ -73,7 +73,7 @@ app.use("/api/v0/groupchat", protectRoute, groupChatRoutes)
 app.use(errorHandler)
 
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log("server is running on PORT:" + PORT);
   connectDB();
 });

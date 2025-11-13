@@ -177,11 +177,11 @@ export const acceptFriendRequest = async (req, res, next) => {
 
     if(!sender) return res.status(404).json({ message: "Sender not found" });
 
-    if(!user.friends.includes(sender._id)) {
+    if(!user.friends.some(id => id.toString() === sender._id.toString())) {
         user.friends.push(sender._id);
     }
 
-    if(!sender.friends.includes(user._id)) {
+    if(!sender.friends.some(id => id.toString() === user._id.toString())) {
         sender.friends.push(user._id);
     }
 
@@ -264,7 +264,8 @@ export const getAllFriends = async (req, res, next) => {
   try {
     const { user } = req;
 
-    const cachedFriends = JSON.parse(await redis.get(`friends:${user._id}`));
+    const cacheData = await redis.get(`friends:${user._id}`);
+    const cachedFriends = cacheData ? JSON.parse(cacheData) : null;
 
     let userUnseenMap={};
 

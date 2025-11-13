@@ -27,6 +27,14 @@ const billSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId, 
       ref: "User" 
     },
+    isPaidCash: {
+      type:Boolean,
+      default: false
+    },
+    cashPaymentVerified:{
+      type: Boolean,
+      default: false
+    },
     userIdForPayment: {
       type: mongoose.Schema.Types.ObjectId, 
       ref: "User" 

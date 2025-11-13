@@ -242,7 +242,7 @@ export const verifyCashPayment = async (req, res, next) => {
     const society = await Societies.findById(societyId)
     if(!society) return res.status(404).json({ message: "Society not found"})
 
-    if ( ! society.admins.some(a => a.equals(user._id)) || !society.owner.equals(user._id) ){
+    if ( ! society.admins.some(a => a.equals(user._id)) && !society.owner.equals(user._id) ){
       return res.status(403).json({ message: "Unauthorized"})
     }
 
@@ -268,7 +268,7 @@ export const deleteBills = async (req, res, next) => {
 
     const society = await Societies.findById(societyId);
 
-    if ( ! society.admins.some(a => a.equals(user._id)) || !society.owner.equals(user._id) ){
+    if ( ! society.admins.some(a => a.equals(user._id)) && !society.owner.equals(user._id) ){
       return res.status(403).json({ message: "Unauthorized"})
     }
 

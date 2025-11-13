@@ -3,12 +3,12 @@ import User from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
     try {
-        const token=req.cookies.jwt;
-
-        if(!token){
-            return res.status(401).json({message: "Unauthorized -no token"});
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'No token provided' });
         }
 
+        const token = authHeader.split(' ')[1];
         const decoded=jwt.verify(token, process.env.JWT_SECRET);
 
         if(!decoded){
@@ -20,6 +20,7 @@ export const protectRoute = async (req, res, next) => {
         if(!user){
             return res.status(401).json({message: "Unauthorized -no user"});
         }
+
         req.user=user;
         next();
     } catch (error) {

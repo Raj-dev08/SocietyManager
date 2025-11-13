@@ -91,7 +91,7 @@ export const verifyOTP = async (req,res,next) => {
     
     if (newUser) {
       await newUser.save();
-      generateToken(newUser._id, res);
+      const token = generateToken(newUser._id, res);
      
 
       await redis.del(`UserInfo:${email}`);
@@ -103,7 +103,9 @@ export const verifyOTP = async (req,res,next) => {
         email: newUser.email,
         profilePic: newUser.profilePic,
         mobileNumber: newUser.mobileNumber,
-        isMobileNumberVerified: newUser.isMobileNumberVerified
+        isMobileNumberVerified: newUser.isMobileNumberVerified,
+        role: newUser.role,
+        token
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -113,7 +115,7 @@ export const verifyOTP = async (req,res,next) => {
   }
 }
 
-//add fcm on each login for safety
+
 export const login = async (req, res) => {
     const { email, password} = req.body;
 
@@ -131,7 +133,7 @@ export const login = async (req, res) => {
         }
 
 
-        generateToken(user._id, res);
+        const token = generateToken(user._id, res);
         
         res.status(200).json({
             _id: user._id,
@@ -140,7 +142,9 @@ export const login = async (req, res) => {
             description: user.description,
             profilePic: user.profilePic,
             mobileNumber: user.mobileNumber,
-            isMobileNumberVerified: user.isMobileNumberVerified
+            isMobileNumberVerified: user.isMobileNumberVerified,
+            role: user.role,
+            token
         });
     } catch (error) {
         console.log("Error in login:", error.message);
@@ -221,7 +225,8 @@ export const updateProfile = async (req, res) => {
       description: updatedUser.description,
       profilePic: updatedUser.profilePic,
       mobileNumber: updatedUser.mobileNumber,
-      isMobileNumberVerified: updatedUser.isMobileNumberVerified
+      isMobileNumberVerified: updatedUser.isMobileNumberVerified,
+      role: updatedUser.role
     });
   } catch (error) {
     console.error("Error in updateProfile controller:", error.message);
